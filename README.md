@@ -1,7 +1,7 @@
 
   # Coordinator Dashboard Design
 
-  This is a code bundle for Coordinator Dashboard Design. The original project is available at https://www.figma.com/design/3zEdoje2HzHHCkv7ZmjrMM/Coordinator-Dashboard-Design.
+  This is a code bundle for Coordinator Dashboard Design. The original project is available at https://squad-cost-60667378.figma.site/.
 
   ## Running the code
 
