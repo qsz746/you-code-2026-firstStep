@@ -1,8 +1,12 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
+import { useAuth } from '../AuthContext';
 
 export default function CoordinatorNavigation() {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const { logout, userRole } = useAuth();
+
   const navItems = [
     { label: 'Dashboard', path: '/coordinator' },
     { label: 'Volunteers', path: '/coordinator/volunteers' },
@@ -13,6 +17,11 @@ export default function CoordinatorNavigation() {
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
   };
 
   return (
@@ -44,6 +53,14 @@ export default function CoordinatorNavigation() {
             <div className="px-3 py-1.5 bg-blue-800 rounded-lg text-blue-50">
               Coordinator
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 rounded-lg text-blue-50 transition-colors"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </div>
       </div>

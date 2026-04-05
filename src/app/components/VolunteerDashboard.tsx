@@ -1,10 +1,12 @@
-import { ArrowLeft, FileText, GraduationCap, Calendar, MessageCircle, Phone, Globe, AlertCircle, Bell } from 'lucide-react';
+import { ArrowLeft, FileText, GraduationCap, Calendar, MessageCircle, Phone, Globe, AlertCircle, Bell, LogOut } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useAuth } from '../AuthContext';
 
 export default function VolunteerDashboard() {
   const { role } = useParams<{ role: string }>();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showOpenShift, setShowOpenShift] = useState(true);
@@ -16,6 +18,11 @@ export default function VolunteerDashboard() {
   };
 
   const roleName = roleNames[role || ''] || 'Volunteer';
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   const handleCancelShift = () => {
     setShowCancelModal(false);
@@ -48,10 +55,20 @@ export default function VolunteerDashboard() {
                 <span className="text-blue-300 font-semibold text-2xl">Step</span>
               </Link>
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 text-white hover:bg-blue-700/50 rounded-lg transition-colors">
-              <Globe className="w-5 h-5" />
-              <span>English</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-2 px-4 py-2 text-white hover:bg-blue-700/50 rounded-lg transition-colors">
+                <Globe className="w-5 h-5" />
+                <span>English</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-white hover:bg-blue-700/50 rounded-lg transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>

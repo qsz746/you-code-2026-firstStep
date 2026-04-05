@@ -1,18 +1,31 @@
 import { Globe, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
+import { useAuth } from '../AuthContext';
 import heroImage from '../../assets/501f8ffa77d7e60b0c26552174bef2b6a134a6ca.png';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user, loading, userRole } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginType, setLoginType] = useState<'coordinator' | 'volunteer' | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!loading && user && userRole) {
+      if (userRole === 'coordinator') {
+        navigate('/coordinator/dashboard');
+      } else if (userRole === 'volunteer') {
+        navigate('/volunteer');
+      }
+    }
+  }, [user, loading, userRole, navigate]);
 
   const handleOpenLogin = (type: 'coordinator' | 'volunteer') => {
     setLoginType(type);
@@ -36,7 +49,7 @@ export default function LandingPage() {
     if (loginType === 'coordinator') {
       navigate('/coordinator/dashboard');
     } else {
-      navigate('/volunteer/dashboard/front-desk');
+      navigate('/volunteer');
     }
     handleCloseModal();
   };
@@ -48,14 +61,7 @@ export default function LandingPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      
-      // Redirect based on login type
-      if (loginType === 'coordinator') {
-        navigate('/coordinator/dashboard');
-      } else {
-        navigate('/volunteer/dashboard/front-desk');
-      }
-      
+      // Redirect will happen automatically via useEffect when userRole is determined
       handleCloseModal();
     } catch (err: any) {
       console.error('Login error:', err);

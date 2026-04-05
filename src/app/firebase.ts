@@ -1,25 +1,24 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
 
-// TODO: Replace with your Firebase project configuration
-// Get these values from Firebase Console > Project Settings > General
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abc123"
+  apiKey: "AIzaSyBgjbQApukVjQH7HEfstI2B2_y4JuznrL4",
+  authDomain: "firststep-3f1c6.firebaseapp.com",
+  projectId: "firststep-3f1c6",
+  storageBucket: "firststep-3f1c6.firebasestorage.app",
+  messagingSenderId: "902459334265",
+  appId: "1:902459334265:web:f66f1841c92edf53bcfea8",
+  measurementId: "G-11B2GRF9LW"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
-
-// For development: you can use Firebase Auth Emulator
-// Uncomment the line below to use the emulator
-// if (window.location.hostname === 'localhost') {
-//   connectAuthEmulator(auth, 'http://localhost:9099');
-// }
+ 

@@ -1,8 +1,15 @@
-import { Users, MessageSquare, ClipboardList, Globe } from 'lucide-react';
+import { Users, MessageSquare, ClipboardList, Globe, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 
 export default function VolunteerPage() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   const roles = [
     {
@@ -35,10 +42,20 @@ export default function VolunteerPage() {
               <span className="text-white font-semibold text-2xl">First</span>
               <span className="text-blue-300 font-semibold text-2xl">Step</span>
             </Link>
-            <button className="flex items-center gap-2 px-4 py-2 text-white hover:bg-blue-700/50 rounded-lg transition-colors">
-              <Globe className="w-5 h-5" />
-              <span>English</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-2 px-4 py-2 text-white hover:bg-blue-700/50 rounded-lg transition-colors">
+                <Globe className="w-5 h-5" />
+                <span>English</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-white hover:bg-blue-700/50 rounded-lg transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>

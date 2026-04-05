@@ -14,6 +14,7 @@ import RoleInstructions from "./components/RoleInstructions";
 import VolunteerFAQ from "./components/VolunteerFAQ";
 import SuggestScenario from "./components/SuggestScenario";
 import ScenarioSubmitted from "./components/ScenarioSubmitted";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -22,58 +23,114 @@ export const router = createBrowserRouter([
   },
   {
     path: "/coordinator",
-    Component: CoordinatorDashboardPage,
+    element: (
+      <ProtectedRoute>
+        <CoordinatorDashboardPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/coordinator/dashboard",
-    Component: CoordinatorDashboardPage,
+    element: (
+      <ProtectedRoute>
+        <CoordinatorDashboardPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/coordinator/volunteers",
-    Component: CoordinatorVolunteersPage,
+    element: (
+      <ProtectedRoute>
+        <CoordinatorVolunteersPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/coordinator/schedule",
-    Component: CoordinatorSchedulePage,
+    element: (
+      <ProtectedRoute>
+        <CoordinatorSchedulePage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/coordinator/resources",
-    Component: CoordinatorResourcesPage,
+    element: (
+      <ProtectedRoute>
+        <CoordinatorResourcesPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/coordinator/knowledge",
-    Component: CoordinatorKnowledgePage,
+    element: (
+      <ProtectedRoute>
+        <CoordinatorKnowledgePage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/coordinator/resources/submission/:id",
-    Component: ScenarioSubmissionDetail,
+    element: (
+      <ProtectedRoute>
+        <ScenarioSubmissionDetail />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/volunteer",
-    Component: VolunteerPage,
+    element: (
+      <ProtectedRoute>
+        <VolunteerPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/volunteer/dashboard/:role",
-    Component: VolunteerDashboard,
+    element: (
+      <ProtectedRoute>
+        <VolunteerDashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/volunteer/training",
-    Component: TrainingModules,
+    element: (
+      <ProtectedRoute>
+        <TrainingModules />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/volunteer/role-instructions/:role",
-    Component: RoleInstructions,
+    element: (
+      <ProtectedRoute>
+        <RoleInstructions />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/volunteer/faq",
-    Component: VolunteerFAQ,
+    element: (
+      <ProtectedRoute>
+        <VolunteerFAQ />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/volunteer/suggest-scenario",
-    Component: SuggestScenario,
+    element: (
+      <ProtectedRoute>
+        <SuggestScenario />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/volunteer/scenario-submitted",
-    Component: ScenarioSubmitted,
+    element: (
+      <ProtectedRoute>
+        <ScenarioSubmitted />
+      </ProtectedRoute>
+    ),
   },
 ]);
