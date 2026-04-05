@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
 import CoordinatorNavigation from './CoordinatorNavigation';
-import { ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 
 interface Submission {
   id: number;
@@ -12,9 +20,10 @@ interface Submission {
   status: string;
   whatHappened: string;
   question: string;
+  suggestedQuestion: string;
+  suggestedAnswer: string;
 }
 
-// Mock data - in real app this would come from props or context
 const mockSubmissions: Record<number, Submission> = {
   1: {
     id: 1,
@@ -24,7 +33,9 @@ const mockSubmissions: Record<number, Submission> = {
     date: '2026-04-03',
     status: 'pending',
     whatHappened: 'A client came in very stressed because they had received an eviction notice and needed to fill out emergency housing assistance forms by the end of the day. They had multiple forms from different agencies and were confused about which ones to complete first and what documentation they needed. I helped them prioritize the forms and gather the required documents, but I wasn\'t sure if I gave them the right advice about the order of applications.',
-    question: 'What is the recommended order for completing multiple emergency housing forms, and how do we prioritize when a client has applications for several different programs?'
+    question: 'What is the recommended order for completing multiple emergency housing forms, and how do we prioritize when a client has applications for several different programs?',
+    suggestedQuestion: 'What is the recommended order for completing multiple emergency housing forms when a client has applications for several different programs?',
+    suggestedAnswer: 'Start with BC Housing applications first, then move to federal programs. Gather all ID documents before starting any forms. If unsure, check with the case manager on duty.'
   },
   2: {
     id: 2,
@@ -34,7 +45,9 @@ const mockSubmissions: Record<number, Submission> = {
     date: '2026-04-02',
     status: 'pending',
     whatHappened: 'During an intake appointment, the client spoke very limited English and the interpreter service was unavailable. I used a translation app on my phone to help communicate, but I wasn\'t sure if this was the proper protocol. The client seemed to understand most of what we discussed, but I\'m concerned about whether the information I collected is accurate enough.',
-    question: 'What is the proper protocol when interpreter services are unavailable during an appointment? Should we reschedule or are there approved alternative methods for communication?'
+    question: 'What is the proper protocol when interpreter services are unavailable during an appointment? Should we reschedule or are there approved alternative methods for communication?',
+    suggestedQuestion: 'What is the proper protocol when interpreter services are unavailable during an appointment?',
+    suggestedAnswer: 'Try to use approved interpretation options first. If accurate communication cannot be confirmed, pause the intake and reschedule with language support in place.'
   },
   3: {
     id: 3,
@@ -44,7 +57,9 @@ const mockSubmissions: Record<number, Submission> = {
     date: '2026-04-01',
     status: 'pending',
     whatHappened: 'A client needed to complete an online application for employment insurance but all computers in our lab were being used. They mentioned they had a smartphone but no data plan. I offered to create a mobile hotspot from my personal phone so they could use their device to complete the application. They were very grateful, but afterward I wondered if this was appropriate.',
-    question: 'Is it acceptable to use personal devices or hotspots to help clients access online services when our resources are fully occupied? What are the alternatives?'
+    question: 'Is it acceptable to use personal devices or hotspots to help clients access online services when our resources are fully occupied? What are the alternatives?',
+    suggestedQuestion: 'Can staff use personal devices or hotspots to help clients access online services when shared resources are full?',
+    suggestedAnswer: 'Avoid using personal devices or hotspots for client services unless your organization explicitly allows it. Offer waitlist support, schedule another time, or connect the client with approved access options.'
   }
 };
 
@@ -52,14 +67,16 @@ export default function ScenarioSubmissionDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedSubmission, setEditedSubmission] = useState<Submission | null>(null);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectNote, setRejectNote] = useState('');
 
-  const submissionId = id ? parseInt(id) : 1;
+  const submissionId = id ? parseInt(id, 10) : 1;
   const submission = editedSubmission || mockSubmissions[submissionId];
 
-  // Check if we should start in edit mode
   useEffect(() => {
     if (location.state?.editMode) {
       setIsEditMode(true);
@@ -87,24 +104,22 @@ export default function ScenarioSubmissionDetail() {
   }
 
   const handleSaveChanges = () => {
-    // In real app, this would update the backend
     setIsEditMode(false);
-    // Navigate back to detail view with updated content
   };
 
   const handleEdit = () => {
-    setEditedSubmission(submission);
+    setEditedSubmission({ ...submission });
     setIsEditMode(true);
   };
 
   const handleApprove = () => {
-    // This will be handled by the parent component via navigation state
     navigate('/coordinator/resources', { state: { action: 'approve', submissionId: submission.id } });
   };
 
   const handleReject = () => {
-    // This will be handled by the parent component via navigation state
-    navigate('/coordinator/resources', { state: { action: 'reject', submissionId: submission.id } });
+    navigate('/coordinator/resources', {
+      state: { action: 'reject', submissionId: submission.id, note: rejectNote }
+    });
   };
 
   return (
@@ -112,7 +127,6 @@ export default function ScenarioSubmissionDetail() {
       <CoordinatorNavigation />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back Button */}
         <button
           onClick={() => navigate('/coordinator/resources')}
           className="flex items-center gap-2 text-neutral-600 hover:text-neutral-800 mb-6 transition-colors"
@@ -121,10 +135,8 @@ export default function ScenarioSubmissionDetail() {
           <span>Back to Pending Submissions</span>
         </button>
 
-        {/* Title */}
         <h1 className="text-neutral-800 mb-2">{submission.title}</h1>
 
-        {/* Metadata */}
         <div className="flex flex-wrap gap-4 text-neutral-600 mb-6">
           <span>Submitted by: {submission.submittedBy}</span>
           <span>•</span>
@@ -133,7 +145,6 @@ export default function ScenarioSubmissionDetail() {
           <span>{submission.date}</span>
         </div>
 
-        {/* Privacy Reminder Banner */}
         <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <p className="text-amber-900">
@@ -141,25 +152,35 @@ export default function ScenarioSubmissionDetail() {
           </p>
         </div>
 
-        {/* Content Sections */}
         <div className="space-y-6 mb-8">
-          {/* Suggested FAQ Question */}
           <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
             <h3 className="text-neutral-800 mb-3">Suggested FAQ Question</h3>
             <p className="text-neutral-700 leading-relaxed">
-              What is the recommended order for completing multiple emergency housing forms when a client has applications for several different programs?
+              {submission.suggestedQuestion}
             </p>
           </div>
 
-          {/* Suggested Answer */}
           <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
             <h3 className="text-neutral-800 mb-3">Suggested Answer</h3>
-            <p className="text-neutral-700 leading-relaxed">
-              Start with BC Housing applications first, then move to federal programs. Gather all ID documents before starting any forms. If unsure, check with the case manager on duty.
-            </p>
+            {isEditMode ? (
+              <textarea
+                value={submission.suggestedAnswer}
+                onChange={(e) => {
+                  setEditedSubmission(current =>
+                    current
+                      ? { ...current, suggestedAnswer: e.target.value }
+                      : current
+                  );
+                }}
+                className="w-full min-h-[180px] p-4 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-neutral-700 leading-relaxed"
+              />
+            ) : (
+              <p className="text-neutral-700 leading-relaxed">
+                {submission.suggestedAnswer}
+              </p>
+            )}
           </div>
 
-          {/* AI Draft Answer */}
           <div className="bg-blue-50 rounded-xl border border-blue-200 p-6 shadow-sm">
             <div className="flex items-start gap-3 mb-3">
               <Sparkles className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -169,14 +190,16 @@ export default function ScenarioSubmissionDetail() {
               Based on this submission, here is a suggested answer ready for the FAQ. Please review and edit before approving.
             </p>
             <div className="flex justify-end">
-              <button className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+              <button
+                onClick={handleEdit}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
                 Edit Draft
               </button>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex flex-wrap gap-3 pb-8">
           {isEditMode ? (
             <>
@@ -199,26 +222,20 @@ export default function ScenarioSubmissionDetail() {
           ) : (
             <>
               <button
-                onClick={() => navigate('/coordinator/resources')}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                Review
-              </button>
-              <button
                 onClick={handleEdit}
-                className="px-6 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg transition-colors"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
               >
                 Edit
               </button>
               <button
-                onClick={handleApprove}
-                className="px-6 py-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition-colors"
+                onClick={() => setApproveModalOpen(true)}
+                className="px-6 py-3 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 rounded-lg transition-colors"
               >
                 Approve
               </button>
               <button
-                onClick={handleReject}
-                className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-colors"
+                onClick={() => setRejectModalOpen(true)}
+                className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg transition-colors"
               >
                 Reject
               </button>
@@ -226,6 +243,68 @@ export default function ScenarioSubmissionDetail() {
           )}
         </div>
       </main>
+
+      <Dialog open={approveModalOpen} onOpenChange={setApproveModalOpen}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle>Add this to the FAQ?</DialogTitle>
+            <DialogDescription>
+              It will be visible to all volunteers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              onClick={() => setApproveModalOpen(false)}
+              className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleApprove}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+            >
+              Yes, Approve
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle>Are you sure you want to reject this submission?</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <label htmlFor="reject-note" className="block text-sm text-neutral-600 mb-2">
+              Add a note for the volunteer (optional)
+            </label>
+            <textarea
+              id="reject-note"
+              value={rejectNote}
+              onChange={(e) => setRejectNote(e.target.value)}
+              placeholder="Optional feedback..."
+              className="w-full min-h-[100px] p-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-neutral-700"
+            />
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                setRejectModalOpen(false);
+                setRejectNote('');
+              }}
+              className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleReject}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+            >
+              Yes, Reject
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
