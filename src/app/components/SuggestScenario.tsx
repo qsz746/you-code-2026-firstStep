@@ -1,14 +1,18 @@
 import { ArrowLeft, Globe, Info } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { createFAQSubmission } from '../../services/faqService';
+import { useAuth } from '../AuthContext';
 
 export default function SuggestScenario() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [situation, setSituation] = useState('');
   const [question, setQuestion] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get roles from localStorage or use default
   const getActiveRoles = () => {
@@ -27,9 +31,30 @@ export default function SuggestScenario() {
 
   const categories = ['Arrival', 'Tasks', 'Safety', 'Hours', 'Emergency', 'Other'];
 
-  const handleSubmit = () => {
-    // In a real app, this would submit to a backend
-    navigate('/volunteer/scenario-submitted');
+  const handleSubmit = async () => {
+    if (!question.trim() || !selectedRole) {
+      alert('Please add a question and select a role.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const submittedBy = user?.displayName || user?.email || 'Anonymous Volunteer';
+      await createFAQSubmission({
+        question: question.trim(),
+        answer: '',
+        category: selectedCategory ? selectedCategory.toLowerCase() : 'other',
+        submittedBy,
+        role: selectedRole,
+        whatHappened: situation.trim(),
+      });
+      navigate('/volunteer/scenario-submitted');
+    } catch (error) {
+      console.error('Failed to submit scenario:', error);
+      alert('Submission failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSaveDraft = () => {
@@ -164,10 +189,11 @@ export default function SuggestScenario() {
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={handleSubmit}
+            disabled={isSubmitting}
             className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg transition-all"
             style={{ minHeight: '56px' }}
           >
-            Submit Suggestion
+            {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
           </button>
           <button
             onClick={handleSaveDraft}
