@@ -1,15 +1,30 @@
 import { Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import CoordinatorNavigation from './CoordinatorNavigation';
 import cloudBackground from '../../assets/674cfea0d6b62209a49a165047fb5176abd114ef.png';
+import { getUnapprovedSubmissionsCount } from '../../services/faqService';
 
 export default function CoordinatorDashboardPage() {
   // Mock data for the dashboard
   const todayStats = {
     newVolunteers: 2,
-    urgentReminders: 3,
-    openIssues: 3
+    urgentReminders: 3
   };
+  const [pendingFaqCount, setPendingFaqCount] = useState<number>(0);
+
+  useEffect(() => {
+    async function loadPendingCount() {
+      try {
+        const count = await getUnapprovedSubmissionsCount();
+        setPendingFaqCount(count);
+      } catch (error) {
+        console.error('Failed to load pending FAQ count:', error);
+      }
+    }
+
+    loadPendingCount();
+  }, []);
 
   return (
     <div className="min-h-screen bg-neutral-50 relative">
@@ -57,7 +72,7 @@ export default function CoordinatorDashboardPage() {
                   <AlertCircle className="w-5 h-5 text-rose-600" />
                 </div>
                 <div>
-                  <div className="text-2xl font-medium text-neutral-800">{todayStats.openIssues}</div>
+                  <div className="text-2xl font-medium text-neutral-800">{pendingFaqCount}</div>
                   <div className="text-neutral-500 mt-1">Pending FAQ Submissions</div>
                 </div>
               </div>

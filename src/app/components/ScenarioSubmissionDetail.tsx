@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Sparkles } from 'lucide-react';
 import CoordinatorNavigation from './CoordinatorNavigation';
+import { getSubmissionById, updateSubmission } from '../../services/faqService';
 import {
   Dialog,
   DialogContent,
@@ -11,56 +12,14 @@ import {
   DialogTitle,
 } from './ui/dialog';
 
-interface Submission {
-  id: number;
-  title: string;
-  submittedBy: string;
-  role: string;
-  date: string;
-  status: string;
-  whatHappened: string;
-  question: string;
-  suggestedQuestion: string;
-  suggestedAnswer: string;
-}
-
-const mockSubmissions: Record<number, Submission> = {
-  1: {
-    id: 1,
-    title: 'Helping client with urgent housing forms',
-    submittedBy: 'Sarah Kim',
-    role: 'Case Worker',
-    date: '2026-04-03',
-    status: 'pending',
-    whatHappened: 'A client came in very stressed because they had received an eviction notice and needed to fill out emergency housing assistance forms by the end of the day. They had multiple forms from different agencies and were confused about which ones to complete first and what documentation they needed. I helped them prioritize the forms and gather the required documents, but I wasn\'t sure if I gave them the right advice about the order of applications.',
-    question: 'What is the recommended order for completing multiple emergency housing forms, and how do we prioritize when a client has applications for several different programs?',
-    suggestedQuestion: 'What is the recommended order for completing multiple emergency housing forms when a client has applications for several different programs?',
-    suggestedAnswer: 'Start with BC Housing applications first, then move to federal programs. Gather all ID documents before starting any forms. If unsure, check with the case manager on duty.'
-  },
-  2: {
-    id: 2,
-    title: 'Language barrier during intake appointment',
-    submittedBy: 'Michael Chen',
-    role: 'Intake Coordinator',
-    date: '2026-04-02',
-    status: 'pending',
-    whatHappened: 'During an intake appointment, the client spoke very limited English and the interpreter service was unavailable. I used a translation app on my phone to help communicate, but I wasn\'t sure if this was the proper protocol. The client seemed to understand most of what we discussed, but I\'m concerned about whether the information I collected is accurate enough.',
-    question: 'What is the proper protocol when interpreter services are unavailable during an appointment? Should we reschedule or are there approved alternative methods for communication?',
-    suggestedQuestion: 'What is the proper protocol when interpreter services are unavailable during an appointment?',
-    suggestedAnswer: 'Try to use approved interpretation options first. If accurate communication cannot be confirmed, pause the intake and reschedule with language support in place.'
-  },
-  3: {
-    id: 3,
-    title: 'Technology access issue in computer lab',
-    submittedBy: 'Priya Patel',
-    role: 'Tech Support',
-    date: '2026-04-01',
-    status: 'pending',
-    whatHappened: 'A client needed to complete an online application for employment insurance but all computers in our lab were being used. They mentioned they had a smartphone but no data plan. I offered to create a mobile hotspot from my personal phone so they could use their device to complete the application. They were very grateful, but afterward I wondered if this was appropriate.',
-    question: 'Is it acceptable to use personal devices or hotspots to help clients access online services when our resources are fully occupied? What are the alternatives?',
-    suggestedQuestion: 'Can staff use personal devices or hotspots to help clients access online services when shared resources are full?',
-    suggestedAnswer: 'Avoid using personal devices or hotspots for client services unless your organization explicitly allows it. Offer waitlist support, schedule another time, or connect the client with approved access options.'
-  }
+type Submission = {
+  id: string;
+  question?: string;
+  answer?: string;
+  submittedBy?: string;
+  role?: string;
+  createdAt?: any;
+  whatHappened?: string;
 };
 
 export default function ScenarioSubmissionDetail() {
@@ -68,29 +27,95 @@ export default function ScenarioSubmissionDetail() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
 
+  const [submission, setSubmission] = useState<Submission | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editedSubmission, setEditedSubmission] = useState<Submission | null>(null);
+  const [editedAnswer, setEditedAnswer] = useState('');
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectNote, setRejectNote] = useState('');
 
-  const submissionId = id ? parseInt(id, 10) : 1;
-  const submission = editedSubmission || mockSubmissions[submissionId];
+  useEffect(() => {
+    async function loadSubmission() {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const data = await getSubmissionById(id);
+        if (!data) {
+          setSubmission(null);
+          setError('Submission not found');
+          return;
+        }
+        setSubmission(data as Submission);
+        setEditedAnswer((data as Submission).answer ?? '');
+        setError(null);
+      } catch (err) {
+        console.error('Failed to load submission:', err);
+        const message = err instanceof Error ? err.message : String(err);
+        setError(`Loading submission failed: ${message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadSubmission();
+  }, [id]);
 
   useEffect(() => {
     if (location.state?.editMode) {
       setIsEditMode(true);
-      setEditedSubmission(mockSubmissions[submissionId]);
     }
-  }, [location.state, submissionId]);
+  }, [location.state]);
 
-  if (!submission) {
+  const handleSaveChanges = async () => {
+    if (!submission) return;
+    try {
+      await updateSubmission(submission.id, { answer: editedAnswer });
+      setSubmission({ ...submission, answer: editedAnswer });
+      setIsEditMode(false);
+    } catch (err) {
+      console.error('Failed to update submission:', err);
+      alert('Save failed. Please try again.');
+    }
+  };
+
+  const handleEdit = () => {
+    setIsEditMode(true);
+  };
+
+  const handleApprove = () => {
+    if (!submission) return;
+    navigate('/coordinator/resources', { state: { action: 'approve', submissionId: submission.id } });
+  };
+
+  const handleReject = () => {
+    if (!submission) return;
+    navigate('/coordinator/resources', {
+      state: { action: 'reject', submissionId: submission.id, note: rejectNote }
+    });
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-neutral-50">
         <CoordinatorNavigation />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
-            <p className="text-neutral-600">Submission not found</p>
+            <p className="text-neutral-600">Loading submission...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!submission || error) {
+    return (
+      <div className="min-h-screen bg-neutral-50">
+        <CoordinatorNavigation />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-12">
+            <p className="text-neutral-600">{error || 'Submission not found'}</p>
             <button
               onClick={() => navigate('/coordinator/resources')}
               className="mt-4 px-4 py-2 bg-neutral-200 hover:bg-neutral-300 text-neutral-800 rounded-lg transition-colors"
@@ -102,25 +127,6 @@ export default function ScenarioSubmissionDetail() {
       </div>
     );
   }
-
-  const handleSaveChanges = () => {
-    setIsEditMode(false);
-  };
-
-  const handleEdit = () => {
-    setEditedSubmission({ ...submission });
-    setIsEditMode(true);
-  };
-
-  const handleApprove = () => {
-    navigate('/coordinator/resources', { state: { action: 'approve', submissionId: submission.id } });
-  };
-
-  const handleReject = () => {
-    navigate('/coordinator/resources', {
-      state: { action: 'reject', submissionId: submission.id, note: rejectNote }
-    });
-  };
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -135,14 +141,14 @@ export default function ScenarioSubmissionDetail() {
           <span>Back to Pending Submissions</span>
         </button>
 
-        <h1 className="text-neutral-800 mb-2">{submission.title}</h1>
+        <h1 className="text-neutral-800 mb-2">{submission.question || 'Scenario submission'}</h1>
 
         <div className="flex flex-wrap gap-4 text-neutral-600 mb-6">
-          <span>Submitted by: {submission.submittedBy}</span>
+          <span>Submitted by: {submission.submittedBy || 'Anonymous Volunteer'}</span>
           <span>•</span>
-          <span>{submission.role}</span>
+          <span>{submission.role || 'Volunteer'}</span>
           <span>•</span>
-          <span>{submission.date}</span>
+          <span>{submission.createdAt?.toDate?.().toLocaleDateString?.() || 'New submission'}</span>
         </div>
 
         <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
@@ -156,7 +162,7 @@ export default function ScenarioSubmissionDetail() {
           <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
             <h3 className="text-neutral-800 mb-3">Suggested FAQ Question</h3>
             <p className="text-neutral-700 leading-relaxed">
-              {submission.suggestedQuestion}
+              {submission.question || 'No question provided.'}
             </p>
           </div>
 
@@ -164,19 +170,13 @@ export default function ScenarioSubmissionDetail() {
             <h3 className="text-neutral-800 mb-3">Suggested Answer</h3>
             {isEditMode ? (
               <textarea
-                value={submission.suggestedAnswer}
-                onChange={(e) => {
-                  setEditedSubmission(current =>
-                    current
-                      ? { ...current, suggestedAnswer: e.target.value }
-                      : current
-                  );
-                }}
+                value={editedAnswer}
+                onChange={(e) => setEditedAnswer(e.target.value)}
                 className="w-full min-h-[180px] p-4 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-neutral-700 leading-relaxed"
               />
             ) : (
               <p className="text-neutral-700 leading-relaxed">
-                {submission.suggestedAnswer}
+                {submission.answer || 'No answer draft yet.'}
               </p>
             )}
           </div>
@@ -210,10 +210,7 @@ export default function ScenarioSubmissionDetail() {
                 Save Changes
               </button>
               <button
-                onClick={() => {
-                  setIsEditMode(false);
-                  setEditedSubmission(null);
-                }}
+                onClick={() => setIsEditMode(false)}
                 className="px-6 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg transition-colors"
               >
                 Cancel

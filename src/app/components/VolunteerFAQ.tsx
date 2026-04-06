@@ -1,11 +1,15 @@
 import { ArrowLeft, Globe, Search, MapPin, Clock, Shield, Phone as PhoneIcon, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getApprovedFAQs } from '../../services/faqService';
 
 export default function VolunteerFAQ() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [faqs, setFaqs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = [
     { id: 'arrival', label: 'Arrival', icon: MapPin },
@@ -15,68 +19,36 @@ export default function VolunteerFAQ() {
     { id: 'emergency', label: 'Emergency', icon: AlertCircle },
   ];
 
-  const faqs = [
-    {
-      category: 'arrival',
-      question: 'Where is the washroom?',
-      answer: 'The washrooms are located down the main hallway, past the reception desk on your left. There are gender-neutral, accessible washrooms available.',
-    },
-    {
-      category: 'arrival',
-      question: 'Where do I park?',
-      answer: 'Free parking is available in the lot behind the building. Enter from Oak Street. If the lot is full, there is street parking on Main Street (2-hour limit).',
-    },
-    {
-      category: 'arrival',
-      question: 'Where do I sign in?',
-      answer: 'Sign in at the reception desk when you arrive. Let them know you\'re a volunteer and which program you\'re supporting.',
-    },
-    {
-      category: 'hours',
-      question: 'What are today\'s hours?',
-      answer: 'The center is open Monday to Friday, 9:00 AM to 6:00 PM. Evening programs run until 8:00 PM on Tuesdays and Thursdays.',
-    },
-    {
-      category: 'hours',
-      question: 'What if I\'m running late?',
-      answer: 'Call your coordinator as soon as possible. Their number is on your shift confirmation. It helps us plan and let others know.',
-    },
-    {
-      category: 'tasks',
-      question: 'What if I don\'t know how to do something?',
-      answer: 'Always ask! Find your coordinator or any staff member. There are no silly questions, and we want you to feel confident.',
-    },
-    {
-      category: 'tasks',
-      question: 'Can I take breaks during my shift?',
-      answer: 'Yes! Take a 15-minute break for shifts over 3 hours. Let someone know you\'re stepping away. The staff room has tea, coffee, and a fridge.',
-    },
-    {
-      category: 'safety',
-      question: 'Who do I call if someone is upset?',
-      answer: 'Call your coordinator or any staff member immediately. Don\'t try to handle difficult situations alone. Your safety and comfort matter.',
-    },
-    {
-      category: 'safety',
-      question: 'What if I feel uncomfortable?',
-      answer: 'You can always step away and find staff. We never expect you to stay in an uncomfortable situation. Your wellbeing is our priority.',
-    },
-    {
-      category: 'emergency',
-      question: 'What do I do in an emergency?',
-      answer: 'For life-threatening emergencies, call 911 first. Then notify staff immediately. For urgent but non-emergency situations, find your coordinator or the on-duty manager.',
-    },
-    {
-      category: 'emergency',
-      question: 'Where are the fire exits?',
-      answer: 'Fire exits are marked with green signs. The main exits are at the front entrance and the back door near the parking lot. Assembly point is in the parking lot.',
-    },
-  ];
+  useEffect(() => {
+    async function loadFAQs() {
+      try {
+        const items = await getApprovedFAQs();
+        setFaqs(items);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to load FAQs:', err);
+        const message = err instanceof Error ? err.message : String(err);
+        setError(`Loading FAQs failed: ${message}`);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const filteredFAQs = faqs.filter((faq) => {
+    loadFAQs();
+  }, []);
+
+  const normalizedFAQs = faqs.map((faq) => {
+    const category = typeof faq.category === 'string' ? faq.category.toLowerCase() : 'other';
+    return { ...faq, category };
+  });
+
+  const filteredFAQs = normalizedFAQs.filter((faq) => {
+    const questionText = (faq.question ?? '').toLowerCase();
+    const answerText = (faq.answer ?? '').toLowerCase();
+    const query = searchQuery.toLowerCase();
     const matchesSearch = searchQuery === '' || 
-      faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
+      questionText.includes(query) ||
+      answerText.includes(query);
     const matchesCategory = !selectedCategory || faq.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -165,16 +137,28 @@ export default function VolunteerFAQ() {
 
         {/* FAQ List */}
         <div className="space-y-4 mb-8">
-          {filteredFAQs.map((faq, index) => (
+          {error && (
+            <div className="bg-red-50 rounded-xl p-6 border border-red-200 text-red-700">
+              {error}
+            </div>
+          )}
+          {loading && (
+            <div className="bg-white rounded-xl p-6 border border-blue-200 shadow-sm text-blue-700">
+              Loading FAQs...
+            </div>
+          )}
+          {!loading && !error && filteredFAQs.map((faq) => (
             <div
-              key={index}
+              key={faq.id}
               className="bg-gradient-to-br from-white to-blue-50 rounded-xl p-6 border-2 border-blue-200 shadow-sm"
             >
               <h3 className="text-blue-900 mb-3">{faq.question}</h3>
-              <p className="text-blue-800 leading-relaxed">{faq.answer}</p>
+              <p className="text-blue-800 leading-relaxed">
+                {faq.answer || 'Answer pending review.'}
+              </p>
             </div>
           ))}
-          {filteredFAQs.length === 0 && (
+          {!loading && !error && filteredFAQs.length === 0 && (
             <div className="bg-white rounded-xl p-8 border-2 border-blue-200 shadow-sm text-center">
               <p className="text-blue-700">
                 No answers found. Try a different search or browse by category.
