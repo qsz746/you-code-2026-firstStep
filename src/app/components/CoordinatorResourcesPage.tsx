@@ -130,9 +130,9 @@ export default function CoordinatorResourcesPage() {
                       <h3 className="text-neutral-800 mb-2">{scenario.question}</h3>
                       <div className="flex flex-wrap gap-4 text-neutral-600">
                         <span>Submitted by: {scenario.submittedBy}</span>
-                        <span>•</span>
+                        <span>ï¿½</span>
                         <span>{scenario.role}</span>
-                        <span>•</span>
+                        <span>ï¿½</span>
                         <span>{scenario.createdAt?.toDate?.().toLocaleDateString?.() || 'New submission'}</span>
                       </div>
                       <div className="mt-2">
@@ -158,16 +158,23 @@ export default function CoordinatorResourcesPage() {
               to="/volunteer/faq"
               className="text-blue-600 hover:text-blue-700 hover:underline transition-colors"
             >
-              View full FAQ ?
+              View full FAQ â†’
             </Link>
           </div>
 
           <div className="bg-white rounded-xl border border-neutral-200 shadow-sm divide-y divide-neutral-100">
             {currentFAQs.map((faq) => (
               <div key={faq.id} className="p-5 hover:bg-neutral-50 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <h3 className="text-neutral-800 flex-1">{faq.question}</h3>
-                  <span className="text-sm text-neutral-500">{faq.category}</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <h3 className="text-neutral-800 flex-1">
+                      {faq.question || faq.title || 'Question pending'}
+                    </h3>
+                    <span className="text-sm text-neutral-500">{faq.category || 'general'}</span>
+                  </div>
+                  <p className="text-neutral-600">
+                    {faq.answer || faq.suggestedAnswer || 'Answer pending.'}
+                  </p>
                 </div>
               </div>
             ))}

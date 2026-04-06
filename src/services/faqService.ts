@@ -7,7 +7,6 @@ export async function createFAQSubmission(data: {
   category?: string;
   submittedBy: string;
   role: string;
-  whatHappened?: string;
 }) {
   return await addDoc(collection(db, "faqSubmissions"), {
     question: data.question,
@@ -17,7 +16,6 @@ export async function createFAQSubmission(data: {
     role: data.role,
     status: "pending",
     isApprove: 0,
-    whatHappened: data.whatHappened ?? "",
     reviewNote: "",
     createdAt: serverTimestamp(),
   });

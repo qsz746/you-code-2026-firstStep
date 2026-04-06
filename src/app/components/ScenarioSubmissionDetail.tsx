@@ -19,7 +19,6 @@ type Submission = {
   submittedBy?: string;
   role?: string;
   createdAt?: any;
-  whatHappened?: string;
 };
 
 export default function ScenarioSubmissionDetail() {
