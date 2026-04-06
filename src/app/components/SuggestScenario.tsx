@@ -7,8 +7,8 @@ import { useAuth } from '../AuthContext';
 export default function SuggestScenario() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [situation, setSituation] = useState('');
-  const [question, setQuestion] = useState('');
+  const [questionText, setQuestionText] = useState('');
+  const [answerText, setAnswerText] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
@@ -32,8 +32,8 @@ export default function SuggestScenario() {
   const categories = ['Arrival', 'Tasks', 'Safety', 'Hours', 'Emergency', 'Other'];
 
   const handleSubmit = async () => {
-    if (!question.trim() || !selectedRole) {
-      alert('Please add a question and select a role.');
+    if (!questionText.trim() || !answerText.trim() || !selectedRole) {
+      alert('Please complete both fields and select a role.');
       return;
     }
 
@@ -41,12 +41,11 @@ export default function SuggestScenario() {
       setIsSubmitting(true);
       const submittedBy = user?.displayName || user?.email || 'Anonymous Volunteer';
       await createFAQSubmission({
-        question: question.trim(),
-        answer: '',
+        question: questionText.trim(),
+        answer: answerText.trim(),
         category: selectedCategory ? selectedCategory.toLowerCase() : 'other',
         submittedBy,
         role: selectedRole,
-        whatHappened: situation.trim(),
       });
       navigate('/volunteer/scenario-submitted');
     } catch (error) {
@@ -104,8 +103,8 @@ export default function SuggestScenario() {
               What situation did you encounter?
             </label>
             <textarea
-              value={situation}
-              onChange={(e) => setSituation(e.target.value)}
+              value={questionText}
+              onChange={(e) => setQuestionText(e.target.value)}
               placeholder="Describe what happened during your shift..."
               rows={5}
               className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg outline-none focus:border-blue-500 text-blue-900 placeholder-blue-400 resize-none"
@@ -122,9 +121,9 @@ export default function SuggestScenario() {
               What question were you trying to answer?
             </label>
             <textarea
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="e.g. What do I do when a client asks about housing support?"
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              placeholder="e.g. Explain the steps to take when a client asks about housing support."
               rows={4}
               className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg outline-none focus:border-blue-500 text-blue-900 placeholder-blue-400 resize-none"
               style={{ minHeight: '100px' }}
